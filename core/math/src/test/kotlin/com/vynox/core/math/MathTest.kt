@@ -89,8 +89,10 @@ class MathTest {
             rotationDegrees = 90.0,
             contentSize = size
         )
+        // Rotating 90deg clockwise about the centre maps the top-left corner
+        // of the layer to (centre + 50, centre - 50) in layer space.
         val topLeft = rotated.transformPoint(Vec2(0.0, 0.0))
-        assertTrue(abs(topLeft.x + 50.0) < 1e-6)
+        assertTrue(abs(topLeft.x - 50.0) < 1e-6)
         assertTrue(abs(topLeft.y + 50.0) < 1e-6)
     }
 
