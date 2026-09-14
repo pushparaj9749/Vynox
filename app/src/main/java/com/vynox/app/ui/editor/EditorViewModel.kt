@@ -22,6 +22,7 @@ import com.vynox.core.animation.Interpolation
 import com.vynox.core.animation.ScalarInterpolator
 import com.vynox.core.animation.StaticValue
 import com.vynox.core.animation.Vec2Interpolator
+import com.vynox.core.animation.ValueInterpolator
 import com.vynox.core.composition.CompositionEvaluator
 import com.vynox.core.composition.RenderMask
 import com.vynox.core.composition.RenderNode
@@ -440,17 +441,19 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         return layer.copy(transform = transform)
     }
 
-    private fun interpolatorFor(property: TransformProperty) =
-        if (property == TransformProperty.ROTATION) AngleInterpolator
-        else if (property.isVec2) Vec2Interpolator
-        else ScalarInterpolator
+    private fun <T> interpolatorFor(property: TransformProperty): ValueInterpolator<T> =
+        when (property) {
+            TransformProperty.ROTATION -> AngleInterpolator
+            TransformProperty.OPACITY -> ScalarInterpolator
+            else -> Vec2Interpolator
+        } as ValueInterpolator<T>
 
     fun setTransformVec2(layerId: String, property: TransformProperty, x: Double, y: Double, animated: Boolean) {
         if (!property.isVec2) return
         updateLayer(layerId, "Change ${property.label}", "transform:$layerId:$property") { layer ->
             val localTime = (_playhead.value - layer.startTime).coerceAtLeast(0.0)
             val propertyValue = propertyOf(layer, property)
-            val next = if (animated || propertyValue.isAnimated) {
+            val next: Animatable<Vec2> = if (animated || propertyValue.isAnimated) {
                 AnimatableOps.setKeyframe(
                     propertyValue as Animatable<Vec2>,
                     Vec2Interpolator,
@@ -468,11 +471,11 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         if (property.isVec2) return
         updateLayer(layerId, "Change ${property.label}", "transform:$layerId:$property") { layer ->
             val localTime = (_playhead.value - layer.startTime).coerceAtLeast(0.0)
-            val propertyValue = propertyOf(layer, property)
-            val next = if (animated || propertyValue.isAnimated) {
+            val propertyValue = propertyOf(layer, property) as Animatable<Double>
+            val next: Animatable<Double> = if (animated || propertyValue.isAnimated) {
                 AnimatableOps.setKeyframe(
-                    propertyValue as Animatable<Double>,
-                    interpolatorFor(property),
+                    propertyValue,
+                    interpolatorFor<Double>(property),
                     localTime,
                     value
                 )
@@ -493,8 +496,15 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
             val propertyValue = propertyOf(layer, property)
             val updated: Animatable<*> = if (propertyValue.isAnimated && propertyValue.keyframes.any { kotlin.math.abs(it.time - localTime) < 1e-3 }) {
                 AnimatableOps.removeKeyframe(propertyValue, localTime)
+            } else if (property.isVec2) {
+                val typed = propertyValue as Animatable<Vec2>
+                AnimatableOps.setKeyframe(typed, Vec2Interpolator, localTime, typed.valueAt(localTime))
+            } else if (property == TransformProperty.ROTATION) {
+                val typed = propertyValue as Animatable<Double>
+                AnimatableOps.setKeyframe(typed, AngleInterpolator, localTime, typed.valueAt(localTime))
             } else {
-                AnimatableOps.setKeyframe(propertyValue, interpolatorFor(property), localTime, propertyValue.valueAt(localTime))
+                val typed = propertyValue as Animatable<Double>
+                AnimatableOps.setKeyframe(typed, ScalarInterpolator, localTime, typed.valueAt(localTime))
             }
             withProperty(layer, property, updated)
         }
@@ -623,11 +633,12 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    private fun interpolatorForParam(value: Animatable<*>) = when (value.valueAt(0.0)) {
-        is Color -> ColorInterpolator
-        is Vec2 -> Vec2Interpolator
-        else -> ScalarInterpolator
-    }
+    private fun <T> interpolatorForParam(value: Animatable<T>): ValueInterpolator<T> =
+        when (value.valueAt(0.0)) {
+            is Color -> ColorInterpolator
+            is Vec2 -> Vec2Interpolator
+            else -> ScalarInterpolator
+        } as ValueInterpolator<T>
 
     // ------------------------------------------------------------------- masks
 

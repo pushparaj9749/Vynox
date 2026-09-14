@@ -49,6 +49,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,6 +63,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import com.vynox.app.ui.common.Chip
 import com.vynox.app.ui.common.LabeledSlider
 import com.vynox.app.ui.common.PanelCard
@@ -122,11 +124,18 @@ fun EditorScreen(
             viewModel.addMediaLayer(asset)
         }
     }
+    val scope = rememberCoroutineScope()
     val relinkPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         val assetId = relinkAssetId
         if (uri != null && assetId != null) {
             runCatching { viewModel.relinkAsset(assetId, uri) }
-                .onFailure { snackbarHostState.showSnackbar("Could not relink: ${it.message ?: "unsupported file"}") }
+                .onFailure { error ->
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            "Could not relink: ${error.message ?: "unsupported file"}"
+                        )
+                    }
+                }
         }
         relinkAssetId = null
     }
