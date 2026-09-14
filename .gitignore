@@ -14,7 +14,7 @@ kotlin-js-store/
 misc.xml
 deploymentTargetDropDown.xml
 render.experimental.xml
-navigation/
+app/src/main/res/navigation/
 *.hprof
 
 # Signing material - NEVER commit keystores, base64 or passwords
