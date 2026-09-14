@@ -1,0 +1,33 @@
+# Gradle / build output
+.gradle/
+build/
+*/build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+kotlin-js-store/
+
+# Android Studio / IDE
+*.iml
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+navigation/
+*.hprof
+
+# Signing material - NEVER commit keystores, base64 or passwords
+*.keystore
+*.jks
+keystore/
+keystore.properties
+signing.properties
+*.p12
+*.pem
+*.key
+
+# OS / misc
+.DS_Store
+Thumbs.db
+*.log
