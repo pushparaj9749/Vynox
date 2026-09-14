@@ -305,6 +305,7 @@ private fun TextContentEditor(viewModel: EditorViewModel, layer: Layer) {
             focusedTextColor = VynoxColors.TextPrimary,
             unfocusedTextColor = VynoxColors.TextPrimary
         )
+    )
     Spacer(Modifier.height(12.dp))
     LabeledSlider(
         label = "Font size",
@@ -451,7 +452,7 @@ private fun ShapeContentEditor(viewModel: EditorViewModel, layer: Layer) {
             value = content.sides.toFloat(),
             range = 3f..12f,
             valueText = "${content.sides}",
-            steps = 8
+            steps = 8,
             onValueChange = { sides ->
                 viewModel.updateShape(layer.id, "sides") { it.copy(sides = sides.toInt()) }
             }

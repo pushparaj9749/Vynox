@@ -61,10 +61,10 @@ fun TimelinePanel(
     viewModel: EditorViewModel,
     modifier: Modifier = Modifier
 ) {
-    val project by collectAsStateWithLifecycle(viewModel.project)
-    val playhead by collectAsStateWithLifecycle(viewModel.playhead)
-    val zoom by collectAsStateWithLifecycle(viewModel.zoom)
-    val selection by collectAsStateWithLifecycle(viewModel.selection)
+    val project by viewModel.project.collectAsStateWithLifecycle()
+    val playhead by viewModel.playhead.collectAsStateWithLifecycle()
+    val zoom by viewModel.zoom.collectAsStateWithLifecycle()
+    val selection by viewModel.selection.collectAsStateWithLifecycle()
 
     var scrollX by remember { mutableFloatStateOf(0f) }
     var dragMode by remember { mutableStateOf<DragMode?>(null) }
