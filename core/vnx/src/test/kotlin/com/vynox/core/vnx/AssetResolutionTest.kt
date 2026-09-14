@@ -54,7 +54,8 @@ class AssetResolutionTest {
 
     @Test
     fun layersUsingMissingAssetsAreIdentified() {
-        val missing = AssetResolution.layersUsingMissing(project()) { it.uri != null && it.id == "asset_video" }
+        // Only the video asset is unreadable here, so the layer using it is flagged.
+        val missing = AssetResolution.layersUsingMissing(project()) { it.id != "asset_video" }
         assertTrue(missing.contains("layer_video"))
         val allPresent = AssetResolution.layersUsingMissing(project()) { true }
         assertTrue(allPresent.isEmpty())
@@ -98,10 +99,14 @@ class AssetResolutionTest {
             "/Downloads/holiday.mp4" to "/Downloads/holiday.mp4",
             "/Music/track.mp3" to "/Music/track.mp3"
         )
-        val relinked = AssetResolution.autoRelink(project(), candidates)
-        assertEquals("/Downloads/holiday.mp4", relinked.asset("asset_video")!!.uri)
-        // asset_audio has no uri but keeps a name, so it is also a candidate.
+        val project = project()
+        val relinked = AssetResolution.autoRelink(project, candidates, exists = { it.id == "asset_video" })
+        // The video still resolves, so it keeps its existing location.
+        assertEquals("/storage/holiday.mp4", relinked.asset("asset_video")!!.uri)
+        // asset_audio has no uri (missing), so it is repaired from the candidate list by name.
         assertEquals("/Music/track.mp3", relinked.asset("asset_audio")!!.uri)
+        // Bundled assets are never repointed.
+        assertEquals(null, relinked.asset("asset_bundled")!!.uri)
     }
 
     @Test

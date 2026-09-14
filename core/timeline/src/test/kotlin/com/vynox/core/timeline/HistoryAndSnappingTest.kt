@@ -114,7 +114,8 @@ class SnappingTest {
     @Test
     fun snapsToNearbyLayerEdge() {
         val project = project()
-        val result = Snapping.snap(project, 10.05, tolerance = 0.2, excludeLayerIds = setOf("b"))
+        // Layer "a" (0-4s) is ignored, so the only nearby edge is layer "b" at 10s.
+        val result = Snapping.snap(project, 10.05, tolerance = 0.2, excludeLayerIds = setOf("a"))
         assertEquals(10.0, result.time, 1e-9)
         assertEquals(SnapKind.LAYER_EDGE, result.kind)
     }

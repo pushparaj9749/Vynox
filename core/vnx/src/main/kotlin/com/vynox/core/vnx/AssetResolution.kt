@@ -86,15 +86,25 @@ object AssetResolution {
         return result
     }
 
-    /** Best effort automatic relink: matches by file name inside [candidates]. */
-    fun autoRelink(project: VynoxProject, candidates: List<Pair<String, String>>): VynoxProject {
+    /**
+     * Best effort automatic relink: matches by file name inside [candidates].
+     *
+     * Only assets that cannot currently be resolved are repointed - an asset
+     * that already resolves keeps its location, so pointing the editor at a
+     * folder of copies never silently rewrites a healthy project.
+     */
+    fun autoRelink(
+        project: VynoxProject,
+        candidates: List<Pair<String, String>>,
+        exists: (Asset) -> Boolean = { it.uri != null }
+    ): VynoxProject {
         val byName = candidates.groupBy({ it.first.substringAfterLast('/') }, { it.second })
         var result = project
         project.assets.forEach { asset ->
-            if (asset.uri == null || asset.isBundled) return@forEach
-            val name = asset.name
-            val match = byName[name]?.firstOrNull()
-            if (match != null) result = relink(result, asset.id, match)
+            if (asset.isBundled) return@forEach
+            if (exists(asset)) return@forEach
+            val match = byName[asset.name]?.firstOrNull() ?: return@forEach
+            result = relink(result, asset.id, match)
         }
         return result
     }

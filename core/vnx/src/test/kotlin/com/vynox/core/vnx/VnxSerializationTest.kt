@@ -167,9 +167,8 @@ class VnxSerializationTest {
         val last = video.transform.position.keyframes.last()
         assertEquals(2.0, last.time, 1e-9)
         assertEquals(Interpolation.fromPreset("ease_in_out").handles, last.interpolation.handles)
-        assertEquals(1, video.transform.opacity.keyframes.size + 1) // 0s and 1s keys
         val opacityKeys = video.transform.opacity.keyframes
-        assertEquals(2, opacityKeys.size)
+        assertEquals(2, opacityKeys.size) // 0s and 1s keys
         assertEquals(Interpolation.HOLD, opacityKeys.last().interpolation)
         // Hold means the value stays at the previous keyframe.
         assertEquals(0.0, video.transform.opacity.valueAt(0.99), 1e-9)

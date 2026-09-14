@@ -1,6 +1,8 @@
 package com.vynox.core.timeline
 
 import com.vynox.core.animation.AnimatableOps
+import com.vynox.core.effects.BuiltInEffects
+import com.vynox.core.effects.EffectRegistry
 import com.vynox.core.animation.ScalarInterpolator
 import com.vynox.core.math.Vec2
 import com.vynox.core.model.Canvas
@@ -16,6 +18,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TimelineOperationsTest {
+
+    init {
+        if (EffectRegistry.all().isEmpty()) BuiltInEffects.register()
+    }
 
     private fun project(): VynoxProject {
         val base = ProjectFactory.create("Test", Canvas(1920, 1080, 30, com.vynox.core.math.Color.BLACK, 20.0))
