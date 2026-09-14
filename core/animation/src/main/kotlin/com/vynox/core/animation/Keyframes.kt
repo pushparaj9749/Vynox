@@ -233,6 +233,18 @@ object AnimatableOps {
         return AnimatedValue(property.valueAt(0.0), track)
     }
 
+    /** Inserts (or replaces) a keyframe with an explicit easing curve. */
+    fun <T> setKeyframe(
+        property: Animatable<T>,
+        interpolator: ValueInterpolator<T>,
+        time: Double,
+        value: T,
+        interpolation: Interpolation
+    ): Animatable<T> {
+        val track = (property.track ?: KeyframeTrack(interpolator)).withKeyframe(time, value, interpolation)
+        return AnimatedValue(property.valueAt(0.0), track)
+    }
+
     fun <T> removeKeyframe(property: Animatable<T>, time: Double): Animatable<T> {
         val track = property.track ?: return property
         return AnimatedValue(property.valueAt(0.0), track.withoutKeyframe(time))

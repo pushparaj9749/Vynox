@@ -63,16 +63,20 @@ class CompositionTest {
     @Test
     fun drawsBottomLayerFirst() {
         val evaluator = CompositionEvaluator(project())
-        val plan = evaluator.evaluate(1.0)
+        // Both layers are live at 3s; the image sits below the shape in the stack.
+        val plan = evaluator.evaluate(3.0)
         assertEquals(listOf("img", "shape"), plan.nodes.map { it.layerId })
     }
 
     @Test
     fun inactiveLayersAreExcluded() {
         val evaluator = CompositionEvaluator(project())
-        assertEquals(1, evaluator.evaluate(0.5).nodes.size)
-        assertEquals(2, evaluator.evaluate(3.0).nodes.size)
-        assertEquals(1, evaluator.evaluate(4.5).nodes.size) // shape ended at 6, image at 5
+        // Image runs 0-5s, shape runs 2-6s.
+        assertEquals(1, evaluator.evaluate(0.5).nodes.size)  // only the image
+        assertEquals(2, evaluator.evaluate(3.0).nodes.size)  // both
+        assertEquals(2, evaluator.evaluate(4.5).nodes.size)  // both
+        assertEquals(1, evaluator.evaluate(5.5).nodes.size)  // only the shape
+        assertTrue(evaluator.evaluate(6.5).nodes.isEmpty())  // neither
     }
 
     @Test

@@ -22,4 +22,5 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(kotlin("test"))
+    testImplementation(project(":core:effects"))
 }
