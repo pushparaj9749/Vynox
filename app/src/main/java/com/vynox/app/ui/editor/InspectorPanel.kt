@@ -305,16 +305,16 @@ private fun TextContentEditor(viewModel: EditorViewModel, layer: Layer) {
             focusedTextColor = VynoxColors.TextPrimary,
             unfocusedTextColor = VynoxColors.TextPrimary
         )
-    )
     Spacer(Modifier.height(12.dp))
     LabeledSlider(
         label = "Font size",
         value = content.fontSize.toFloat(),
         range = 8f..400f,
-        valueText = "${content.fontSize.toInt()}px"
-    ) { size ->
-        viewModel.updateText(layer.id, "textsize") { it.copy(fontSize = size.toDouble()) }
-    }
+        valueText = "${content.fontSize.toInt()}px",
+        onValueChange = { size ->
+            viewModel.updateText(layer.id, "textsize") { it.copy(fontSize = size.toDouble()) }
+        }
+    )
     SectionTitle("Weight & style")
     Row {
         listOf(300, 400, 600, 700, 900).forEach { weight ->
@@ -340,18 +340,20 @@ private fun TextContentEditor(viewModel: EditorViewModel, layer: Layer) {
         label = "Letter spacing",
         value = content.letterSpacing.toFloat(),
         range = -10f..40f,
-        valueText = "%.1f".format(content.letterSpacing)
-    ) { spacing ->
-        viewModel.updateText(layer.id, "letter") { it.copy(letterSpacing = spacing.toDouble()) }
-    }
+        valueText = "%.1f".format(content.letterSpacing),
+        onValueChange = { spacing ->
+            viewModel.updateText(layer.id, "letter") { it.copy(letterSpacing = spacing.toDouble()) }
+        }
+    )
     LabeledSlider(
         label = "Line spacing",
         value = content.lineSpacing.toFloat(),
         range = 0.7f..3f,
-        valueText = "%.2f".format(content.lineSpacing)
-    ) { spacing ->
-        viewModel.updateText(layer.id, "linespace") { it.copy(lineSpacing = spacing.toDouble()) }
-    }
+        valueText = "%.2f".format(content.lineSpacing),
+        onValueChange = { spacing ->
+            viewModel.updateText(layer.id, "linespace") { it.copy(lineSpacing = spacing.toDouble()) }
+        }
+    )
     SectionTitle("Colour")
     ColorRow(selected = content.color.valueAt(0.0).argb) { argb ->
         viewModel.updateText(layer.id) { it.copy(color = com.vynox.core.animation.StaticValue(EngineColor.fromArgb(argb))) }
@@ -363,10 +365,11 @@ private fun TextContentEditor(viewModel: EditorViewModel, layer: Layer) {
             label = "Stroke width",
             value = content.strokeWidth.toFloat(),
             range = 0f..40f,
-            valueText = "%.1f".format(content.strokeWidth)
-        ) { width ->
-            viewModel.updateText(layer.id, "stroke") { it.copy(strokeWidth = width.toDouble()) }
-        }
+            valueText = "%.1f".format(content.strokeWidth),
+            onValueChange = { width ->
+                viewModel.updateText(layer.id, "stroke") { it.copy(strokeWidth = width.toDouble()) }
+            }
+        )
         ColorRow(selected = content.strokeColor.valueAt(0.0).argb) { argb ->
             viewModel.updateText(layer.id) { it.copy(strokeColor = com.vynox.core.animation.StaticValue(EngineColor.fromArgb(argb))) }
         }
@@ -377,10 +380,11 @@ private fun TextContentEditor(viewModel: EditorViewModel, layer: Layer) {
             label = "Shadow radius",
             value = content.shadowRadius.toFloat(),
             range = 0f..80f,
-            valueText = "%.0f".format(content.shadowRadius)
-        ) { radius ->
-            viewModel.updateText(layer.id, "shadow") { it.copy(shadowRadius = radius.toDouble()) }
-        }
+            valueText = "%.0f".format(content.shadowRadius),
+            onValueChange = { radius ->
+                viewModel.updateText(layer.id, "shadow") { it.copy(shadowRadius = radius.toDouble()) }
+            }
+        )
     }
     ToggleRow("Background", content.backgroundEnabled) { viewModel.updateText(layer.id) { it.copy(backgroundEnabled = !content.backgroundEnabled) } }
     if (content.backgroundEnabled) {
@@ -388,10 +392,11 @@ private fun TextContentEditor(viewModel: EditorViewModel, layer: Layer) {
             label = "Padding",
             value = content.backgroundPadding.toFloat(),
             range = 0f..80f,
-            valueText = "%.0f".format(content.backgroundPadding)
-        ) { padding ->
-            viewModel.updateText(layer.id, "bgpad") { it.copy(backgroundPadding = padding.toDouble()) }
-        }
+            valueText = "%.0f".format(content.backgroundPadding),
+            onValueChange = { padding ->
+                viewModel.updateText(layer.id, "bgpad") { it.copy(backgroundPadding = padding.toDouble()) }
+            }
+        )
         ColorRow(selected = content.backgroundColor.valueAt(0.0).argb) { argb ->
             viewModel.updateText(layer.id) { it.copy(backgroundColor = com.vynox.core.animation.StaticValue(EngineColor.fromArgb(argb))) }
         }
@@ -415,27 +420,30 @@ private fun ShapeContentEditor(viewModel: EditorViewModel, layer: Layer) {
         label = "Width",
         value = content.size.x.toFloat(),
         range = 8f..2048f,
-        valueText = "${content.size.x.toInt()}"
-    ) { width ->
-        viewModel.updateShape(layer.id, "shapew") { it.copy(size = Vec2(width.toDouble(), content.size.y)) }
-    }
+        valueText = "${content.size.x.toInt()}",
+        onValueChange = { width ->
+            viewModel.updateShape(layer.id, "shapew") { it.copy(size = Vec2(width.toDouble(), content.size.y)) }
+        }
+    )
     LabeledSlider(
         label = "Height",
         value = content.size.y.toFloat(),
         range = 8f..2048f,
-        valueText = "${content.size.y.toInt()}"
-    ) { height ->
-        viewModel.updateShape(layer.id, "shapeh") { it.copy(size = Vec2(content.size.x, height.toDouble())) }
-    }
+        valueText = "${content.size.y.toInt()}",
+        onValueChange = { height ->
+            viewModel.updateShape(layer.id, "shapeh") { it.copy(size = Vec2(content.size.x, height.toDouble())) }
+        }
+    )
     if (content.shape == ShapeKind.ROUNDED_RECT) {
         LabeledSlider(
             label = "Corner radius",
             value = content.cornerRadius.toFloat(),
             range = 0f..400f,
-            valueText = "${content.cornerRadius.toInt()}"
-        ) { radius ->
-            viewModel.updateShape(layer.id, "radius") { it.copy(cornerRadius = radius.toDouble()) }
-        }
+            valueText = "${content.cornerRadius.toInt()}",
+            onValueChange = { radius ->
+                viewModel.updateShape(layer.id, "radius") { it.copy(cornerRadius = radius.toDouble()) }
+            }
+        )
     }
     if (content.shape == ShapeKind.POLYGON) {
         LabeledSlider(
@@ -444,9 +452,10 @@ private fun ShapeContentEditor(viewModel: EditorViewModel, layer: Layer) {
             range = 3f..12f,
             valueText = "${content.sides}",
             steps = 8
-        ) { sides ->
-            viewModel.updateShape(layer.id, "sides") { it.copy(sides = sides.toInt()) }
-        }
+            onValueChange = { sides ->
+                viewModel.updateShape(layer.id, "sides") { it.copy(sides = sides.toInt()) }
+            }
+        )
     }
     Spacer(Modifier.height(10.dp))
     ToggleRow("Fill", content.fillEnabled) { viewModel.updateShape(layer.id) { it.copy(fillEnabled = !content.fillEnabled) } }
@@ -461,10 +470,11 @@ private fun ShapeContentEditor(viewModel: EditorViewModel, layer: Layer) {
             label = "Stroke width",
             value = content.strokeWidth.toFloat(),
             range = 0f..80f,
-            valueText = "%.0f".format(content.strokeWidth)
-        ) { width ->
-            viewModel.updateShape(layer.id, "stwidth") { it.copy(strokeWidth = width.toDouble()) }
-        }
+            valueText = "%.0f".format(content.strokeWidth),
+            onValueChange = { width ->
+                viewModel.updateShape(layer.id, "stwidth") { it.copy(strokeWidth = width.toDouble()) }
+            }
+        )
         ColorRow(selected = content.strokeColor.valueAt(0.0).argb) { argb ->
             viewModel.updateShape(layer.id) { it.copy(strokeColor = com.vynox.core.animation.StaticValue(EngineColor.fromArgb(argb))) }
         }

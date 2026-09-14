@@ -37,7 +37,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vynox.app.ui.common.Chip
-import com.vynox.app.ui.common.ColorRow
 import com.vynox.app.ui.common.KeyframeDiamondIcon
 import com.vynox.app.ui.common.EmptyState
 import com.vynox.app.ui.common.LabeledSlider
