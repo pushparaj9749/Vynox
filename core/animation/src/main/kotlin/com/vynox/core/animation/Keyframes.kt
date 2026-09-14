@@ -29,12 +29,21 @@ object ScalarInterpolator : ValueInterpolator<Double> {
 
 object AngleInterpolator : ValueInterpolator<Double> {
     override val typeId: String = ValueType.ANGLE
+
     /** Interpolates along the shortest arc so a 350° -> 10° turn goes forward. */
     override fun interpolate(from: Double, to: Double, t: Double): Double {
         var delta = (to - from) % 360.0
         if (delta > 180.0) delta -= 360.0
         if (delta < -180.0) delta += 360.0
-        return from + delta * t
+        return normalizeDegrees(from + delta * t)
+    }
+
+    /** Wraps an angle into [0, 360) so reported rotation values stay canonical. */
+    fun normalizeDegrees(degrees: Double): Double {
+        if (degrees.isNaN() || degrees.isInfinite()) return degrees
+        var value = degrees % 360.0
+        if (value < 0.0) value += 360.0
+        return if (value >= 360.0) value - 360.0 else value
     }
 }
 
@@ -128,9 +137,14 @@ class KeyframeTrack<T>(
     fun withoutKeyframe(time: Double): KeyframeTrack<T> =
         KeyframeTrack(interpolator, keyframes.filter { abs(it.time - time) > 1e-4 })
 
+    /**
+     * Moves a keyframe to [toTime]. Dropping a keyframe onto another replaces it
+     * instead of creating two keyframes at the same time, which would leave the
+     * track ambiguous for both rendering and the dope sheet.
+     */
     fun moveKeyframe(fromTime: Double, toTime: Double): KeyframeTrack<T> {
         val kf = keyframeAt(fromTime) ?: return this
-        val others = keyframes.filter { abs(it.time - fromTime) > 1e-4 }
+        val others = keyframes.filter { abs(it.time - fromTime) > 1e-4 && abs(it.time - toTime) > 1e-4 }
         val merged = (others + kf.copy(time = toTime)).sortedBy { it.time }
         return KeyframeTrack(interpolator, merged)
     }

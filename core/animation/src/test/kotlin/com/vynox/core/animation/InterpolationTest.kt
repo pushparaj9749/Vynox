@@ -81,9 +81,12 @@ class InterpolationTest {
 
     @Test
     fun angleInterpolatorTakesShortestPath() {
+        // Shortest arc from 350 to 10 passes through 0 (reported canonically),
+        // never the long way round through 180.
         val value = AngleInterpolator.interpolate(350.0, 10.0, 0.5)
-        assertEquals(360.0, value, 1e-9)
+        assertEquals(0.0, value, 1e-9)
         assertEquals(10.0, AngleInterpolator.interpolate(350.0, 10.0, 1.0), 1e-9)
+        assertEquals(355.0, AngleInterpolator.interpolate(350.0, 10.0, 0.25), 1e-9)
     }
 
     @Test

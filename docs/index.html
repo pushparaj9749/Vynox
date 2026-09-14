@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vynox — Offline video editor for Android</title>
+<meta name="description" content="Vynox is an offline-first, multi-layer video and motion graphics editor for Android with keyframe animation, GPU effects, masks and true MP4 export. Download the latest APK." />
+<meta name="theme-color" content="#08090D" />
+<meta property="og:title" content="Vynox — Offline video editor for Android" />
+<meta property="og:description" content="Multi-layer timeline, keyframe animation, GPU effects, masks and real MP4 export. Everything works offline." />
+<meta property="og:type" content="website" />
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="wrap bar">
+    <a class="brand" href="#top">
+      <img src="assets/icon.svg" alt="" width="34" height="34" />
+      <span>Vynox</span>
+    </a>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#changelog">Changelog</a>
+      <a href="#install">Install</a>
+      <a class="gh" href="https://github.com/pushparaj9749/Vynox" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero wrap">
+    <div class="badge" id="version-badge">Loading latest release…</div>
+    <h1>Edit video on your phone.<br /><span class="grad">Fully offline.</span></h1>
+    <p class="lede">
+      Vynox is a real multi-layer editor for Android: cut, trim and split on a timeline,
+      animate anything with keyframes and a Bezier graph editor, add text, shapes, masks,
+      GPU effects and blend modes — then export a genuine MP4 (not a screen recording).
+      No account, no upload, no internet required.
+    </p>
+
+    <div class="cta">
+      <!-- The download link is filled at runtime from the latest GitHub release,
+           so it never points at an outdated, version-specific URL. -->
+      <a id="download" class="btn primary" href="https://github.com/pushparaj9749/Vynox/releases/latest" data-dynamic="1">
+        Download APK
+      </a>
+      <a class="btn ghost" href="https://github.com/pushparaj9749/Vynox" target="_blank" rel="noopener">View source</a>
+    </div>
+
+    <p class="meta" id="release-meta">Checking releases…</p>
+
+    <div class="cards">
+      <div class="card">
+        <h3>Offline by design</h3>
+        <p>Import, edit, preview and export with no network. The only optional call is the update check on the home screen.</p>
+      </div>
+      <div class="card">
+        <h3>Your projects, portable</h3>
+        <p>Projects save as versioned <code>.vnx</code> files, optionally bundling their media, so one file is the whole edit.</p>
+      </div>
+      <div class="card">
+        <h3>Real rendering</h3>
+        <p>OpenGL ES compositing with 10 blend modes, per-layer masks, colour grading, blur, sharpen and glow.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="wrap section">
+    <h2>What you can do</h2>
+    <div class="grid">
+      <div class="tile"><h4>Timeline</h4><p>Multi-layer clips, split at playhead, in/out trim, drag with snapping, markers, zoom and scrub.</p></div>
+      <div class="tile"><h4>Keyframes</h4><p>Linear, hold and Bezier easing on position, scale, rotation, opacity and every effect parameter.</p></div>
+      <div class="tile"><h4>Graph editor</h4><p>Shape interpolation curves by hand. Editing the graph changes how the animation actually plays.</p></div>
+      <div class="tile"><h4>Text</h4><p>Editable text layers with size, weight, spacing, alignment, stroke, shadow and background.</p></div>
+      <div class="tile"><h4>Shapes</h4><p>Rect, rounded rect, ellipse, line and polygon with fill, stroke and corner control.</p></div>
+      <div class="tile"><h4>Masks</h4><p>Rectangle, ellipse and path masks with position, size, rotation, feather, opacity and invert.</p></div>
+      <div class="tile"><h4>Effects</h4><p>Blur, brightness, contrast, saturation, hue, exposure, sharpen, glow, vignette, tint, invert, temperature.</p></div>
+      <div class="tile"><h4>Blending</h4><p>Normal, multiply, screen, overlay, add, darken and more, composited per layer on the GPU.</p></div>
+      <div class="tile"><h4>Audio</h4><p>Import audio and video sound, per-layer volume and mute, resampled preview playback, AAC in export.</p></div>
+      <div class="tile"><h4>Export</h4><p>MP4 (H.264 + AAC) with resolution, frame rate and bitrate control, progress and cancellation.</p></div>
+      <div class="tile"><h4>Reliability</h4><p>Undo/redo, local autosave with recovery, and a relink screen when media goes missing.</p></div>
+      <div class="tile"><h4>Format</h4><p>Versioned <code>.vnx</code> schema, decoupled from the UI, with shared/bundled project support.</p></div>
+    </div>
+  </section>
+
+  <section id="install" class="wrap section">
+    <h2>Install</h2>
+    <ol class="steps">
+      <li>Tap <strong>Download APK</strong> to get the latest signed release.</li>
+      <li>Open the downloaded file. Android will ask for permission to install from this source — allow it for your browser or files app.</li>
+      <li>Tap <strong>Install</strong>, then open Vynox and grant media permission when you import your first clip.</li>
+    </ol>
+    <p class="note">
+      Requires Android 8.0 (API 26) or newer. Releases are signed; if Android warns about an unknown
+      source, that is the normal side-loading prompt, not a problem with the file.
+    </p>
+  </section>
+
+  <section id="changelog" class="wrap section">
+    <h2>Changelog</h2>
+    <div id="changelog-body" class="changelog">Loading release notes…</div>
+    <p class="note">
+      Every release is published on
+      <a href="https://github.com/pushparaj9749/Vynox/releases" target="_blank" rel="noopener">GitHub Releases</a>
+      together with its APK.
+    </p>
+  </section>
+
+  <footer class="wrap foot">
+    <p>Vynox is open source. Built offline-first, for phones.</p>
+    <p><a href="https://github.com/pushparaj9749/Vynox" target="_blank" rel="noopener">github.com/pushparaj9749/Vynox</a></p>
+  </footer>
+</main>
+
+<script src="assets/script.js" defer></script>
+</body>
+</html>
