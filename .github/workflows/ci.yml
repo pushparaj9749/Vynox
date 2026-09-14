@@ -70,7 +70,14 @@ jobs:
             echo "### ❌ CI failure on \`${{ github.ref_name }}\` (\`${GITHUB_SHA::7}\`)"
             echo '```'
             for f in engine-tests.log debug-build.log release-build.log; do
-              if [ -f "$f" ]; then echo "----- $f -----"; tail -n 150 "$f"; fi
+              if [ -f "$f" ]; then
+                echo "----- $f -----"
+                grep -E "^(e: |w: .*error)|FAILED$|FAILED:|What went wrong|^\* What went wrong" "$f" | head -25
+                echo "--- details ---"
+                awk '/^\* What went wrong:/,/^\* Try:/' "$f" | head -40
+                echo "--- kotlin errors ---"
+                grep -E "^e: " "$f" | head -40
+              fi
             done
             echo '```'
           } > /tmp/failure.md
