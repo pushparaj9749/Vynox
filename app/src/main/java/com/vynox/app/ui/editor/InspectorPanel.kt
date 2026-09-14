@@ -261,6 +261,7 @@ private fun KeyframeToggle(active: Boolean, animated: Boolean, onClick: () -> Un
                 active -> VynoxColors.Amber
                 animated -> VynoxColors.Amber.copy(alpha = 0.45f)
                 else -> VynoxColors.TextMuted
+            },
             modifier = Modifier.size(18.dp)
         )
     }
