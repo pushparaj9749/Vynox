@@ -624,10 +624,14 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
             val localTime = (_playhead.value - layer.startTime).coerceAtLeast(0.0)
             val current = effect.parameters[param] ?: return@updateLayer layer
             val hasKey = current.keyframes.any { kotlin.math.abs(it.time - localTime) < 1e-3 }
-            val next = if (hasKey) {
-                AnimatableOps.removeKeyframe(current, localTime)
+            // The parameter map is heterogeneous, so give the compiler one concrete
+            // type to work with while keeping the value/interpolator pair consistent.
+            @Suppress("UNCHECKED_CAST")
+            val typed = current as Animatable<Any>
+            val next: Animatable<*> = if (hasKey) {
+                AnimatableOps.removeKeyframe(typed, localTime)
             } else {
-                AnimatableOps.setKeyframe(current, interpolatorForParam(current), localTime, current.valueAt(localTime))
+                AnimatableOps.setKeyframe(typed, interpolatorForParam(typed), localTime, typed.valueAt(localTime))
             }
             layer.withReplacedEffect(effect.copy(parameters = effect.parameters + (param to next)))
         }

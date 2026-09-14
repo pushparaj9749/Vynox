@@ -319,25 +319,25 @@ private fun MaskCard(viewModel: EditorViewModel, layer: Layer, mask: Mask) {
         Spacer(Modifier.height(6.dp))
         LabeledSlider("X", mask.position.x.toFloat(), -2000f..4000f, {
             viewModel.updateMask(layer.id, mask.copy(position = Vec2(it.toDouble(), mask.position.y)))
-        }, "${mask.position.x.toInt()}")
+        }, valueText = "${mask.position.x.toInt()}")
         LabeledSlider("Y", mask.position.y.toFloat(), -2000f..4000f, {
             viewModel.updateMask(layer.id, mask.copy(position = Vec2(mask.position.x, it.toDouble())))
-        }, "${mask.position.y.toInt()}")
+        }, valueText = "${mask.position.y.toInt()}")
         LabeledSlider("Width", mask.size.x.toFloat(), 4f..4000f, {
             viewModel.updateMask(layer.id, mask.copy(size = Vec2(it.toDouble(), mask.size.y)))
-        }, "${mask.size.x.toInt()}")
+        }, valueText = "${mask.size.x.toInt()}")
         LabeledSlider("Height", mask.size.y.toFloat(), 4f..4000f, {
             viewModel.updateMask(layer.id, mask.copy(size = Vec2(mask.size.x, it.toDouble())))
-        }, "${mask.size.y.toInt()}")
+        }, valueText = "${mask.size.y.toInt()}")
         LabeledSlider("Rotation", mask.rotation.toFloat(), -360f..360f, {
             viewModel.updateMask(layer.id, mask.copy(rotation = it.toDouble()))
-        }, "${mask.rotation.toInt()}°")
+        }, valueText = "${mask.rotation.toInt()}°")
         LabeledSlider("Feather", mask.feather.toFloat(), 0f..400f, {
             viewModel.updateMask(layer.id, mask.copy(feather = it.toDouble()))
-        }, "${mask.feather.toInt()}px")
+        }, valueText = "${mask.feather.toInt()}px")
         LabeledSlider("Opacity", mask.opacity.toFloat(), 0f..1f, {
             viewModel.updateMask(layer.id, mask.copy(opacity = it.toDouble()))
-        }, "${(mask.opacity * 100).toInt()}%")
+        }, valueText = "${(mask.opacity * 100).toInt()}%")
         ToggleRow("Invert", mask.invert) { viewModel.updateMask(layer.id, mask.copy(invert = it)) }
         if (mask.shape == MaskShape.PATH) {
             Text(
