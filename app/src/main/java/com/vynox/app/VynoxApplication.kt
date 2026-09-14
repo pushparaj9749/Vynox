@@ -23,6 +23,7 @@ class VynoxApplication : Application() {
                     .build()
             )
         }
+        VynoxServices.init(this)
         EffectRegistry.registerAll(BuiltInEffects.definitions())
     }
 }

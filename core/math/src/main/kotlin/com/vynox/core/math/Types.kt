@@ -200,6 +200,13 @@ class Matrix3(
         )
     }
 
+    /** Column-major copy for glUniformMatrix3fv. */
+    fun toColumnMajorFloatArray(): FloatArray = floatArrayOf(
+        m00.toFloat(), m10.toFloat(), m20.toFloat(),
+        m01.toFloat(), m11.toFloat(), m21.toFloat(),
+        m02.toFloat(), m12.toFloat(), m22.toFloat()
+    )
+
     fun toFloatArray(): FloatArray = floatArrayOf(
         m00.toFloat(), m01.toFloat(), m02.toFloat(),
         m10.toFloat(), m11.toFloat(), m12.toFloat(),
