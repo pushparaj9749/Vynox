@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vynox.app.ui.common.Chip
+import com.vynox.app.ui.common.KeyframeDiamondIcon
 import com.vynox.app.ui.common.EmptyState
 import com.vynox.app.ui.common.LabeledSlider
 import com.vynox.app.ui.common.SectionTitle
@@ -242,9 +243,7 @@ private fun EffectParameterRow(
                     androidx.compose.material3.IconButton(
                         onClick = { viewModel.toggleEffectKeyframe(layer.id, effect.id, descriptor.key) }
                     ) {
-                        Icon(
-                            Icons.Rounded.Diamond,
-                            contentDescription = "Keyframe",
+                        KeyframeDiamondIcon(
                             tint = if (hasKey) VynoxColors.Amber else VynoxColors.TextMuted,
                             modifier = Modifier.size(18.dp)
                         )

@@ -208,10 +208,11 @@ object AndroidTextMetrics : TextMetricsProvider {
             this.letterSpacing = (letterSpacing / fontSize.coerceAtLeast(1.0)).toFloat()
         }
         val lines = text.split('\n')
-        val widest = lines.maxOf { paint.measureText(it) }
+        val widest = lines.maxOf { paint.measureText(it) }.toDouble()
         val lineHeight = fontSize * lineSpacing
+        val limit = if (maxWidth > 0.0) maxWidth else Double.MAX_VALUE
         return Size(
-            (widest.coerceAtMost(maxWidth.takeIf { it > 0.0 } ?: Double.MAX_VALUE).toDouble()),
+            widest.coerceAtMost(limit),
             (lineHeight * lines.size).coerceAtLeast(lineHeight)
         )
     }

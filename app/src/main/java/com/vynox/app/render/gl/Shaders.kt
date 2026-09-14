@@ -9,7 +9,7 @@ package com.vynox.app.render.gl
  */
 object Shaders {
 
-    const val VERTEX_QUAD = """
+    val VERTEX_QUAD = """
         attribute vec2 aPosition;
         attribute vec2 aTexCoord;
         uniform mat3 uMatrix;
@@ -22,7 +22,7 @@ object Shaders {
     """.trimIndent()
 
     /** Straight texture copy (used for images, text, shapes and blits). */
-    const val FRAG_TEXTURE = """
+    val FRAG_TEXTURE = """
         precision mediump float;
         uniform sampler2D uTexture;
         uniform float uOpacity;
@@ -34,7 +34,7 @@ object Shaders {
     """.trimIndent()
 
     /** Video frames decoded through a SurfaceTexture (external OES sampler). */
-    const val FRAG_VIDEO = """
+    val FRAG_VIDEO = """
         #extension GL_OES_EGL_image_external : require
         precision mediump float;
         uniform samplerExternalOES uTexture;
@@ -49,7 +49,7 @@ object Shaders {
     """.trimIndent()
 
     /** Solid colour fill (backgrounds, placeholders). */
-    const val FRAG_SOLID = """
+    val FRAG_SOLID = """
         precision mediump float;
         uniform vec4 uColor;
         varying vec2 vTexCoord;
@@ -62,7 +62,7 @@ object Shaders {
      * Mask generation: analytic shapes with feathered edges.
      * uShape: 0 = rectangle, 1 = ellipse, 2 = path texture.
      */
-    const val FRAG_MASK = """
+    val FRAG_MASK = """
         precision mediump float;
         uniform int uShape;
         uniform sampler2D uPath;
@@ -108,7 +108,7 @@ object Shaders {
     """.trimIndent()
 
     /** Applies a mask texture to a layer: result = layer * maskAlpha (with mode). */
-    const val FRAG_MASK_APPLY = """
+    val FRAG_MASK_APPLY = """
         precision mediump float;
         uniform sampler2D uTexture;
         uniform sampler2D uMask;
@@ -128,7 +128,7 @@ object Shaders {
      * lightness, exposure, temperature, tint, invert, vignette and opacity.
      * Neutral values leave the image untouched.
      */
-    const val FRAG_GRADE = """
+    val FRAG_GRADE = """
         precision mediump float;
         uniform sampler2D uTexture;
         uniform float uBrightness;
@@ -223,7 +223,7 @@ object Shaders {
     """.trimIndent()
 
     /** Separable gaussian blur (radius in pixels, direction (1,0) or (0,1)). */
-    const val FRAG_BLUR = """
+    val FRAG_BLUR = """
         precision mediump float;
         uniform sampler2D uTexture;
         uniform vec2 uTexelSize;
@@ -247,7 +247,7 @@ object Shaders {
     """.trimIndent()
 
     /** Unsharp-mask style sharpening. */
-    const val FRAG_SHARPEN = """
+    val FRAG_SHARPEN = """
         precision mediump float;
         uniform sampler2D uTexture;
         uniform vec2 uTexelSize;
@@ -268,7 +268,7 @@ object Shaders {
     """.trimIndent()
 
     /** Bright pass for glow. */
-    const val FRAG_GLOW_BRIGHT = """
+    val FRAG_GLOW_BRIGHT = """
         precision mediump float;
         uniform sampler2D uTexture;
         uniform float uThreshold;
@@ -282,7 +282,7 @@ object Shaders {
     """.trimIndent()
 
     /** Adds the blurred glow back over the original layer. */
-    const val FRAG_GLOW_COMBINE = """
+    val FRAG_GLOW_COMBINE = """
         precision mediump float;
         uniform sampler2D uTexture;
         uniform sampler2D uGlow;
@@ -302,7 +302,7 @@ object Shaders {
      * uMode: 0 normal, 1 multiply, 2 screen, 3 overlay, 4 darken, 5 lighten,
      *        6 add, 7 difference, 8 exclusion, 9 soft light
      */
-    const val FRAG_BLEND = """
+    val FRAG_BLEND = """
         precision mediump float;
         uniform sampler2D uBackdrop;
         uniform sampler2D uSource;

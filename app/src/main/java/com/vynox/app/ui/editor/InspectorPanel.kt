@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vynox.app.ui.common.Chip
+import com.vynox.app.ui.common.KeyframeDiamondIcon
 import com.vynox.app.ui.common.ColorChip
 import com.vynox.app.ui.common.EmptyState
 import com.vynox.app.ui.common.LabeledSlider
@@ -255,15 +256,13 @@ private fun KeyframeToggle(active: Boolean, animated: Boolean, onClick: () -> Un
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            Icons.Rounded.Diamond,
-            contentDescription = "Keyframe",
+        KeyframeDiamondIcon(
             tint = when {
-                active -> VynoxColors.Ink
-                animated -> VynoxColors.Amber.copy(alpha = 0.5f)
+                active -> VynoxColors.Amber
+                animated -> VynoxColors.Amber.copy(alpha = 0.45f)
                 else -> VynoxColors.TextMuted
             },
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(18.dp)
         )
     }
 }

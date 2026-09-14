@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Density
@@ -60,10 +61,10 @@ fun TimelinePanel(
     viewModel: EditorViewModel,
     modifier: Modifier = Modifier
 ) {
-    val project by androidx.compose.runtime.collectAsStateWithLifecycle(viewModel.project)
-    val playhead by androidx.compose.runtime.collectAsStateWithLifecycle(viewModel.playhead)
-    val zoom by androidx.compose.runtime.collectAsStateWithLifecycle(viewModel.zoom)
-    val selection by androidx.compose.runtime.collectAsStateWithLifecycle(viewModel.selection)
+    val project by collectAsStateWithLifecycle(viewModel.project)
+    val playhead by collectAsStateWithLifecycle(viewModel.playhead)
+    val zoom by collectAsStateWithLifecycle(viewModel.zoom)
+    val selection by collectAsStateWithLifecycle(viewModel.selection)
 
     var scrollX by remember { mutableFloatStateOf(0f) }
     var dragMode by remember { mutableStateOf<DragMode?>(null) }
@@ -73,7 +74,9 @@ fun TimelinePanel(
     val rulerHeightPx = with(androidx.compose.ui.platform.LocalDensity.current) { RULER_HEIGHT.toPx() }
     val edgeGrabPx = with(androidx.compose.ui.platform.LocalDensity.current) { EDGE_GRAB_DP.dp.toPx() }
 
-    val contentHeight = (rulerHeightPx + rowHeightPx * project.layers.size.coerceAtLeast(1)).dp
+    val contentHeight = with(androidx.compose.ui.platform.LocalDensity.current) {
+        (rulerHeightPx + rowHeightPx * project.layers.size.coerceAtLeast(1)).toDp()
+    }
 
     Box(
         modifier = modifier

@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vynox.app.ui.common.Chip
+import com.vynox.app.ui.common.KeyframeDiamondIcon
 import com.vynox.app.ui.common.EmptyState
 import com.vynox.app.ui.common.SectionTitle
 import com.vynox.app.ui.theme.VynoxColors
@@ -100,12 +101,7 @@ fun AnimationTab(viewModel: EditorViewModel, layer: Layer, playhead: Double) {
                 .padding(horizontal = 10.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                Icons.Rounded.Diamond,
-                contentDescription = null,
-                tint = VynoxColors.Amber,
-                modifier = Modifier.size(14.dp)
-            )
+            KeyframeDiamondIcon(tint = VynoxColors.Amber, modifier = Modifier.size(14.dp))
             Spacer(Modifier.width(8.dp))
             Text(
                 "%.2fs".format(keyframe.time),
@@ -138,11 +134,15 @@ fun AnimationTab(viewModel: EditorViewModel, layer: Layer, playhead: Double) {
         Interpolation.PRESETS.keys.forEach { name ->
             val selected = animatable.keyframes.firstOrNull { abs(it.time - localTime) < 1e-3 }
                 ?.interpolation?.let { Interpolation.presetName(it) == name } == true
-            Chip(text = name.replace('_', ' '), selected = selected) {
-                viewModel.setKeyframeInterpolation(
-                    layer.id, property, localTime, Interpolation.fromPreset(name)
-                )
-            }
+            Chip(
+                text = name.replace('_', ' '),
+                selected = selected,
+                onClick = {
+                    viewModel.setKeyframeInterpolation(
+                        layer.id, property, localTime, Interpolation.fromPreset(name)
+                    )
+                }
+            )
             Spacer(Modifier.width(6.dp))
         }
     }
@@ -264,8 +264,8 @@ fun GraphEditor(
                                 draggingTime = target
                             } else {
                                 // Dragging the curve itself shapes the bezier handles.
-                                val nx = (change.position.x / size.width).coerceIn(0.0, 1.0)
-                                val ny = (1.0 - (change.position.y / size.height)).coerceIn(-0.4, 1.4)
+                                val nx = (change.position.x / size.width).toDouble().coerceIn(0.0, 1.0)
+                                val ny = (1.0 - (change.position.y / size.height).toDouble()).coerceIn(-0.4, 1.4)
                                 val currentInterp = keyframes.getOrNull(segmentIndex + 1)?.interpolation
                                 val basis = if (currentInterp?.isBezier == true) currentInterp else Interpolation.PRESETS.getValue("ease_in_out")
                                 val left = nx < 0.5

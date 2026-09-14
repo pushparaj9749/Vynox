@@ -140,7 +140,7 @@ jobs:
                 echo "--- details ---"
                 awk '/^\* What went wrong:/,/^\* Try:/' "$f" | head -40
                 echo "--- kotlin errors ---"
-                grep -E "^e: " "$f" | head -60
+                grep -E "^e: " "$f" | sort -u | head -150
               fi
             done
             echo '```'

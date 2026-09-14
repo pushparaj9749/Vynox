@@ -299,8 +299,8 @@ class VideoExporter(private val context: Context) {
 
     fun estimateSizeBytes(project: VynoxProject, settings: ExportSettings): Long {
         val seconds = project.duration.coerceAtLeast(0.1)
-        val video = settings.videoBitrateMbps * 1_000_000f / 8f * seconds
-        val audio = if (settings.includeAudio) settings.audioBitrateKbps * 1000 / 8f * seconds else 0f
-        return (video + audio).toLong()
+        val videoBits = settings.videoBitrateMbps.toDouble() * 1_000_000.0
+        val audioBits = if (settings.includeAudio) settings.audioBitrateKbps.toDouble() * 1000.0 else 0.0
+        return ((videoBits + audioBits) / 8.0 * seconds).toLong()
     }
 }

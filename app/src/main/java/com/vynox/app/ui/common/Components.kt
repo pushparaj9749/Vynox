@@ -1,6 +1,7 @@
 package com.vynox.app.ui.common
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,8 +37,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Path
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -119,8 +123,7 @@ fun PanelCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp)),
-        color = VynoxColors.Surface,
-        content = content
+        color = VynoxColors.Surface
     ) {
         Box(Modifier.padding(14.dp)) { content() }
     }
@@ -313,5 +316,25 @@ fun VynoxProgress(progress: Float, modifier: Modifier = Modifier) {
                 .height(8.dp)
                 .background(VynoxGradient)
         )
+    }
+}
+
+/** Keyframe indicator: a filled diamond, matching the timeline's keyframe glyphs. */
+@Composable
+fun KeyframeDiamondIcon(
+    modifier: Modifier = Modifier.size(14.dp),
+    tint: Color = VynoxColors.Amber,
+    filled: Boolean = true
+) {
+    Canvas(modifier = modifier) {
+        val radius = size.minDimension / 2f
+        val path = Path().apply {
+            moveTo(center.x, center.y - radius)
+            lineTo(center.x + radius, center.y)
+            lineTo(center.x, center.y + radius)
+            lineTo(center.x - radius, center.y)
+            close()
+        }
+        drawPath(path, tint, style = if (filled) Fill else Stroke(width = 1.5f))
     }
 }
