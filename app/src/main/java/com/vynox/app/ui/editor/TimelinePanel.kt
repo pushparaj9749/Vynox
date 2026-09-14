@@ -289,11 +289,11 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeline(
         )
         if (selected) {
             drawRoundRect(
-                color = Color.Transparent,
+                color = VynoxColors.Cyan,
                 topLeft = Offset(startX.coerceAtLeast(-40f), top),
                 size = Size((endX - startX).coerceAtLeast(4f), clipHeight),
                 cornerRadius = CornerRadius(8f, 8f),
-                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f, color = VynoxColors.Cyan)
+                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f)
             )
         }
 
