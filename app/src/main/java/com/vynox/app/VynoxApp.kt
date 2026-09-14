@@ -1,11 +1,5 @@
 package com.vynox.app
 
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -18,10 +12,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.vynox.app.data.ProjectSummary
 import com.vynox.app.ui.about.AboutScreen
 import com.vynox.app.ui.editor.EditorScreen
@@ -29,6 +19,8 @@ import com.vynox.app.ui.editor.EditorViewModel
 import com.vynox.app.ui.export.ExportScreen
 import com.vynox.app.ui.home.HomeScreen
 import com.vynox.app.ui.importv.ImportScreen
+import com.vynox.app.ui.navigation.NavHost
+import com.vynox.app.ui.navigation.Navigator
 import com.vynox.app.ui.navigation.Screen
 import com.vynox.app.ui.navigation.VynoxSession
 import com.vynox.app.ui.newproject.NewProjectScreen
@@ -36,21 +28,18 @@ import com.vynox.app.ui.projects.ProjectsScreen
 import com.vynox.app.ui.settings.SettingsScreen
 import com.vynox.app.ui.splash.SplashScreen
 import com.vynox.app.ui.theme.VynoxTheme
-import com.vynox.core.model.VynoxProject
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 /**
- * Root composition: theme + navigation graph.
+ * Root composition: theme plus the screen graph.
  *
- * The editor keeps its [EditorViewModel] alive for the whole graph so the
- * document, undo history and playback state survive navigation to Export and
- * back. No screen performs network calls; the only optional connectivity is the
+ * The editor's [EditorViewModel] is created once for the whole graph, so the
+ * document, undo history and playback survive navigation to Export and back.
+ * No screen performs network calls; the only optional connectivity is the
  * update check on Home.
  */
 @Composable
 fun VynoxApp() {
-    val navController: NavHostController = rememberNavController()
+    val navigator = remember { Navigator(Screen.Splash) }
     val editorViewModel: EditorViewModel = viewModel()
     val versionName = BuildConfig.VERSION_NAME
 
@@ -58,118 +47,100 @@ fun VynoxApp() {
 
     VynoxTheme {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            NavHost(
-                navController = navController,
-                startDestination = Screen.Splash.route,
-                enterTransition = { fadeIn(tween(160)) + slideInHorizontally(tween(220)) { it / 6 } },
-                exitTransition = { fadeOut(tween(120)) },
-                popEnterTransition = { fadeIn(tween(160)) },
-                popExitTransition = { fadeOut(tween(120)) + slideOutHorizontally(tween(220)) { it / 6 } }
-            ) {
-                composable(Screen.Splash.route) {
-                    SplashScreen(onFinished = {
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Splash.route) { inclusive = true }
-                        }
+            NavHost(navigator = navigator) { screen ->
+                when (screen) {
+                    Screen.Splash -> SplashScreen(onFinished = {
+                        navigator.navigate(Screen.Home)
+                        navigator.popUpTo(Screen.Splash, inclusive = true)
                     })
-                }
 
-                composable(Screen.Home.route) {
-                    HomeScreen(
-                        onNewProject = { navController.navigate(Screen.NewProject.route) },
-                        onOpenProjects = { navController.navigate(Screen.Projects.route) },
+                    Screen.Home -> HomeScreen(
+                        onNewProject = { navigator.navigate(Screen.NewProject) },
+                        onOpenProjects = { navigator.navigate(Screen.Projects) },
                         onImport = {
                             pendingImportUri = null
-                            navController.navigate(Screen.Import.route)
+                            navigator.navigate(Screen.Import)
                         },
-                        onSettings = { navController.navigate(Screen.Settings.route) },
-                        onAbout = { navController.navigate(Screen.About.route) },
-                        onOpenProject = { summary -> openProject(summary, editorViewModel, navController) },
+                        onSettings = { navigator.navigate(Screen.Settings) },
+                        onAbout = { navigator.navigate(Screen.About) },
+                        onOpenProject = { summary -> openProject(summary, editorViewModel, navigator) },
                         onRecover = {
                             val recovered = VynoxServices.projectStore.loadAutosave()
                             if (recovered != null) {
                                 VynoxSession.open(recovered)
                                 editorViewModel.load(recovered)
-                                navController.navigate(Screen.Editor.route)
+                                navigator.navigate(Screen.Editor)
                             }
                         },
                         versionName = versionName
                     )
-                }
 
-                composable(Screen.Projects.route) {
-                    ProjectsScreen(
-                        onBack = { navController.popBackStack() },
-                        onOpenProject = { summary -> openProject(summary, editorViewModel, navController) },
+                    Screen.Projects -> ProjectsScreen(
+                        onBack = { navigator.pop() },
+                        onOpenProject = { summary -> openProject(summary, editorViewModel, navigator) },
                         onImportVnx = { uri ->
                             pendingImportUri = uri
-                            navController.navigate(Screen.Import.route)
+                            navigator.navigate(Screen.Import)
                         }
                     )
-                }
 
-                composable(Screen.NewProject.route) {
-                    NewProjectScreen(
-                        onBack = { navController.popBackStack() },
+                    Screen.NewProject -> NewProjectScreen(
+                        onBack = { navigator.pop() },
                         onCreate = { project ->
                             VynoxSession.open(project)
                             editorViewModel.load(project)
-                            navController.navigate(Screen.Editor.route)
+                            navigator.navigate(Screen.Editor)
                         },
                         versionName = versionName
                     )
-                }
 
-                composable(Screen.Import.route) {
-                    ImportScreen(
-                        onBack = { navController.popBackStack() },
+                    Screen.Import -> ImportScreen(
+                        onBack = { navigator.pop() },
                         onOpen = { project ->
                             VynoxSession.open(project)
                             editorViewModel.load(project)
-                            navController.navigate(Screen.Editor.route)
+                            navigator.navigate(Screen.Editor)
                         },
                         initialUri = pendingImportUri
                     )
-                }
 
-                composable(Screen.Editor.route) {
-                    // Make sure the document loaded elsewhere (new / import / recovery)
-                    // is the one the editor is showing.
-                    LaunchedEffect(Unit) {
-                        val session = VynoxSession.project
-                        if (session != null && session !== editorViewModel.project.value) {
-                            editorViewModel.load(session, VynoxSession.file, VynoxSession.warnings)
+                    Screen.Editor -> {
+                        // A document loaded elsewhere (new / import / recovery) becomes
+                        // the one the editor is showing.
+                        LaunchedEffect(Unit) {
+                            val session = VynoxSession.project
+                            if (session != null && session !== editorViewModel.project.value) {
+                                editorViewModel.load(session, VynoxSession.file, VynoxSession.warnings)
+                            }
                         }
-                    }
-                    DisposableEffect(Unit) {
-                        onDispose {
-                            // Leaving the editor never loses work: a snapshot is written.
-                            editorViewModel.pause()
+                        DisposableEffect(Unit) {
+                            onDispose { editorViewModel.pause() }
                         }
+                        EditorScreen(
+                            viewModel = editorViewModel,
+                            onBack = {
+                                editorViewModel.pause()
+                                editorViewModel.save()
+                                navigator.pop()
+                            },
+                            onExport = { navigator.navigate(Screen.Export) }
+                        )
                     }
-                    EditorScreen(
+
+                    Screen.Export -> ExportScreen(
                         viewModel = editorViewModel,
-                        onBack = {
-                            editorViewModel.pause()
-                            navController.popBackStack()
-                        },
-                        onExport = { navController.navigate(Screen.Export.route) }
+                        onBack = { navigator.pop() }
                     )
-                }
 
-                composable(Screen.Export.route) {
-                    ExportScreen(
-                        viewModel = editorViewModel,
-                        onBack = { navController.popBackStack() }
+                    Screen.Settings -> SettingsScreen(
+                        onBack = { navigator.pop() },
+                        versionName = versionName
                     )
-                }
 
-                composable(Screen.Settings.route) {
-                    SettingsScreen(onBack = { navController.popBackStack() }, versionName = versionName)
-                }
-
-                composable(Screen.About.route) {
-                    AboutScreen(onBack = { navController.popBackStack() }, versionName = versionName)
+                    Screen.About -> AboutScreen(
+                        onBack = { navigator.pop() },
+                        versionName = versionName
+                    )
                 }
             }
         }
@@ -179,11 +150,11 @@ fun VynoxApp() {
 private fun openProject(
     summary: ProjectSummary,
     editorViewModel: EditorViewModel,
-    navController: NavHostController
+    navigator: Navigator
 ) {
     val file = java.io.File(summary.path)
     val result = runCatching { VynoxServices.projectStore.load(file) }.getOrNull() ?: return
     VynoxSession.open(result.project, file, result.warnings)
     editorViewModel.load(result.project, file, result.warnings)
-    navController.navigate(Screen.Editor.route)
+    navigator.navigate(Screen.Editor)
 }

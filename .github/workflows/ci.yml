@@ -55,13 +55,73 @@ jobs:
           set -o pipefail
           ./gradlew --no-daemon --stacktrace assembleRelease 2>&1 | tee release-build.log
 
+      - name: Summarise test failures
+        if: always()
+        run: |
+          python3 - <<'PY' | tee test-summary.md
+          import glob, os, xml.etree.ElementTree as ET
+
+          failures = []
+          for path in sorted(glob.glob('core/*/build/test-results/test/*.xml')):
+              module = path.split(os.sep)[1]
+              try:
+                  root = ET.parse(path).getroot()
+              except Exception:
+                  continue
+              for case in root.iter('testcase'):
+                  for kind in ('failure', 'error'):
+                      node = case.find(kind)
+                      if node is None:
+                          continue
+                      message = (node.get('message') or '').strip().splitlines()
+                      detail = ' | '.join(message[:4])
+                      failures.append(f"- `{module}` {case.get('classname','').split('.')[-1]}.{case.get('name')} :: {detail[:280]}")
+          counts = []
+          for path in sorted(glob.glob('core/*/build/test-results/test/*.xml')):
+              try:
+                  root = ET.parse(path).getroot()
+              except Exception:
+                  continue
+              counts.append((int(root.get('tests', 0)), int(root.get('failures', 0)), int(root.get('errors', 0))))
+          total = sum(c[0] for c in counts)
+          failed = sum(c[1] + c[2] for c in counts)
+          print(f"Engine tests: {total} run, {failed} failed")
+          if failures:
+              print()
+              for line in failures[:40]:
+                  print(line)
+          PY
+
       - name: Collect artifacts
         if: always()
         run: |
           mkdir -p ci-out
           cp app/build/outputs/apk/debug/*.apk ci-out/ 2>/dev/null || true
           cp app/build/outputs/apk/release/*.apk ci-out/ 2>/dev/null || true
+          mkdir -p ci-logs
+          cp engine-tests.log debug-build.log release-build.log test-summary.md ci-logs/ 2>/dev/null || true
           ls -la ci-out || true
+
+      - name: Upload build outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vynox-ci-outputs
+          path: ci-out
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vynox-ci-diagnostics
+          path: |
+            ci-logs
+            core/*/build/test-results/test/*.xml
+            core/*/build/reports/tests/test
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: Report failure
         if: failure()
@@ -69,6 +129,10 @@ jobs:
           {
             echo "### ❌ CI failure on \`${{ github.ref_name }}\` (\`${GITHUB_SHA::7}\`)"
             echo '```'
+            if [ -f test-summary.md ]; then
+              echo "----- test summary -----"
+              head -45 test-summary.md
+            fi
             for f in engine-tests.log debug-build.log release-build.log; do
               if [ -f "$f" ]; then
                 echo "----- $f -----"
@@ -76,7 +140,7 @@ jobs:
                 echo "--- details ---"
                 awk '/^\* What went wrong:/,/^\* Try:/' "$f" | head -40
                 echo "--- kotlin errors ---"
-                grep -E "^e: " "$f" | head -40
+                grep -E "^e: " "$f" | head -60
               fi
             done
             echo '```'

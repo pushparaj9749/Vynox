@@ -110,9 +110,13 @@ jobs:
           OUT="release-out/Vynox-${VERSION}.apk"
           cp "$APK" "$OUT"
           ls -lh "$OUT"
-          "$ANDROID_HOME"/build-tools/*/apksigner verify --print-certs "$OUT" 2>/dev/null \
-            && echo "APK signature verified" || echo "APK is unsigned (no signing secrets configured)"
-          file "$OUT" || true
+          APKSIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -n 1 || true)
+          if [ -n "$APKSIGNER" ] && [ "${signed:-false}" = "true" ]; then
+            "$APKSIGNER" verify --print-certs "$OUT"
+            echo "APK signature verified"
+          else
+            echo "APK is unsigned (no signing secrets configured)"
+          fi
           echo "apk=$OUT" >> "$GITHUB_OUTPUT"
           echo "name=Vynox-${VERSION}.apk" >> "$GITHUB_OUTPUT"
 
@@ -167,16 +171,20 @@ jobs:
           cat docs/VERSION
 
       - name: Commit changelog
+        # Only branch runs can push; tag-triggered runs leave the repository alone
+        # (the release notes already live on the GitHub Release itself).
+        if: startsWith(github.ref, 'refs/heads/')
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md docs/VERSION || true
+          git add CHANGELOG.md docs/VERSION
           if git diff --cached --quiet; then
             echo "No changelog changes to commit."
           else
             git commit -m "docs: record release ${{ steps.tag.outputs.tag }}"
-            git push origin HEAD:${{ github.ref_name }}
+            git push origin HEAD:"${GITHUB_REF#refs/heads/}" || \
+              echo "Changelog commit could not be pushed (branch protection?); the release is unaffected."
           fi
 
       - name: Trigger Pages deployment

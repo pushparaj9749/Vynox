@@ -66,6 +66,8 @@ android {
 
     buildFeatures {
         compose = true
+        // Exposes BuildConfig.VERSION_NAME to the About and Settings screens.
+        buildConfig = true
     }
 
     packaging {
@@ -91,7 +93,6 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.graphics)
