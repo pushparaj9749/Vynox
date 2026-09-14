@@ -1,0 +1,166 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+# Least privilege: the build only reads source and reports status.
+permissions:
+  contents: read
+  issues: write
+  checks: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Engine unit tests
+        id: tests
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace test 2>&1 | tee engine-tests.log
+
+      - name: Debug build
+        id: debug
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace assembleDebug 2>&1 | tee debug-build.log
+
+      - name: Release build (unsigned, verifies release variant)
+        id: release
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace assembleRelease 2>&1 | tee release-build.log
+
+      - name: Summarise test failures
+        if: always()
+        run: |
+          python3 - <<'PY' | tee test-summary.md
+          import glob, os, xml.etree.ElementTree as ET
+
+          failures = []
+          for path in sorted(glob.glob('core/*/build/test-results/test/*.xml')):
+              module = path.split(os.sep)[1]
+              try:
+                  root = ET.parse(path).getroot()
+              except Exception:
+                  continue
+              for case in root.iter('testcase'):
+                  for kind in ('failure', 'error'):
+                      node = case.find(kind)
+                      if node is None:
+                          continue
+                      message = (node.get('message') or '').strip().splitlines()
+                      detail = ' | '.join(message[:4])
+                      failures.append(f"- `{module}` {case.get('classname','').split('.')[-1]}.{case.get('name')} :: {detail[:280]}")
+          counts = []
+          for path in sorted(glob.glob('core/*/build/test-results/test/*.xml')):
+              try:
+                  root = ET.parse(path).getroot()
+              except Exception:
+                  continue
+              counts.append((int(root.get('tests', 0)), int(root.get('failures', 0)), int(root.get('errors', 0))))
+          total = sum(c[0] for c in counts)
+          failed = sum(c[1] + c[2] for c in counts)
+          print(f"Engine tests: {total} run, {failed} failed")
+          if failures:
+              print()
+              for line in failures[:40]:
+                  print(line)
+          PY
+
+      - name: Collect artifacts
+        if: always()
+        run: |
+          mkdir -p ci-out
+          cp app/build/outputs/apk/debug/*.apk ci-out/ 2>/dev/null || true
+          cp app/build/outputs/apk/release/*.apk ci-out/ 2>/dev/null || true
+          mkdir -p ci-logs
+          cp engine-tests.log debug-build.log release-build.log test-summary.md ci-logs/ 2>/dev/null || true
+          ls -la ci-out || true
+
+      - name: Upload build outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vynox-ci-outputs
+          path: ci-out
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vynox-ci-diagnostics
+          path: |
+            ci-logs
+            core/*/build/test-results/test/*.xml
+            core/*/build/reports/tests/test
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Report failure
+        if: failure()
+        run: |
+          {
+            echo "### ❌ CI failure on \`${{ github.ref_name }}\` (\`${GITHUB_SHA::7}\`)"
+            echo '```'
+            if [ -f test-summary.md ]; then
+              echo "----- test summary -----"
+              head -45 test-summary.md
+            fi
+            for f in engine-tests.log debug-build.log release-build.log; do
+              if [ -f "$f" ]; then
+                echo "----- $f -----"
+                grep -E "^(e: |w: .*error)|FAILED$|FAILED:|What went wrong|^\* What went wrong" "$f" | head -25
+                echo "--- details ---"
+                awk '/^\* What went wrong:/,/^\* Try:/' "$f" | head -40
+                echo "--- kotlin errors ---"
+                grep -E "^e: " "$f" | sort -u | head -150
+              fi
+            done
+            echo '```'
+          } > /tmp/failure.md
+          gh issue comment 1 --repo ${{ github.repository }} --body-file /tmp/failure.md || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Report success
+        if: success()
+        run: |
+          {
+            echo "### ✅ CI passed on \`${{ github.ref_name }}\` (\`${GITHUB_SHA::7}\`)"
+            echo '```'
+            for f in engine-tests.log debug-build.log release-build.log; do
+              if [ -f "$f" ]; then grep -h -E "BUILD SUCCESSFUL|BUILD FAILED|> Task" "$f" | tail -8; fi
+            done
+            ls -la ci-out 2>/dev/null || true
+            echo '```'
+          } > /tmp/success.md
+          gh issue comment 1 --repo ${{ github.repository }} --body-file /tmp/success.md || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
