@@ -1,0 +1,11 @@
+{
+  "name": "vynox-128-hardware",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:rtl": "node tools/run_iverilog_wasm.mjs"
+  },
+  "devDependencies": {
+    "@veriflow/iverilog-wasm": "0.1.4"
+  }
+}
