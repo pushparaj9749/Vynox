@@ -1,291 +1,158 @@
-# Vynox
+# Vynox-128
 
-**Offline-first, multi-layer video and motion-graphics editor for Android.**
-
-Vynox is a complete Android app with its own editing engine: a real timeline, real
-keyframe animation with a Bezier graph editor, text and shape layers, masks, GPU
-effects, blending modes, audio, an OpenGL ES preview, a versioned `.vnx` project
-format and genuine MP4 export (H.264 + AAC rendered from the composition — not a
-screen recording).
-
-Everything works with the network switched off. The only optional network call in
-the whole app is the update check on the home screen, which can be turned off in
-Settings.
-
-- **Download the latest APK:** <https://pushparaj9749.github.io/Vynox/>
-- **Source:** <https://github.com/pushparaj9749/Vynox>
-
----
-
-## Contents
-
-1. [Features](#features)
-2. [Offline architecture](#offline-architecture)
-3. [The `.vnx` project format](#the-vnx-project-format)
-4. [Architecture](#architecture)
-5. [Development setup](#development-setup)
-6. [Building](#building)
-7. [Testing](#testing)
-8. [Release process](#release-process)
-9. [Download page (GitHub Pages)](#download-page-github-pages)
-10. [Limitations](#limitations)
-11. [Roadmap](#roadmap)
-12. [Security](#security)
-
----
-
-## Features
-
-### Editing
-
-| Area | What is implemented |
-| --- | --- |
-| Import | Local video, image and audio through the Android storage picker; duration, dimensions, sample rate and MIME probed on import |
-| Timeline | Multi-layer, canvas-drawn: drag to move with snapping, in/out trim handles, split at playhead, markers, pinch zoom, scrub |
-| Layers | Video, image, audio, text, shape and group (null) layers; reorder, visibility, lock, mute, solo, rename, duplicate, delete |
-| Keyframes | Add, delete, move and copy keyframes on position, scale, rotation, opacity and every effect parameter |
-| Easing | Linear, hold and Bezier interpolation with named presets, editable in a graph editor that changes real playback |
-| Text | Editable text layers: content, size, weight, italic, alignment, letter and line spacing, colour, stroke, shadow, background |
-| Shapes | Rectangle, rounded rectangle, ellipse, line and polygon with fill, stroke, corner radius and side count |
-| Masks | Rectangle, ellipse and path masks with position, size, rotation, feather, opacity, invert and add/subtract/intersect modes |
-| Effects | Blur, brightness, contrast, saturation, hue, exposure, sharpen, glow, opacity, vignette, tint, invert, temperature — GPU accelerated, serialised in `.vnx` |
-| Blending | Normal, multiply, screen, overlay, add/lighten, darken and more, per layer |
-| Audio | Per-layer volume and mute, resampled sequential decoding for preview, A/V sync with re-seek on scrub, AAC in the export |
-| Preview | OpenGL ES compositor driving a `SurfaceView`; play, pause, seek, scrub, zoom, fit-to-canvas and on-canvas transform handles (move, scale, rotate) |
-| Export | MP4 (H.264 + AAC) with resolution, frame rate and bitrate control, live progress, cancellation and a size estimate |
-
-### Project and reliability
-
-- Save and open `.vnx` files, optionally **bundling the media** so one file is the whole edit.
-- Project library with thumbnails, plus import of a `.vnx` from anywhere (share intent, downloads,Drive).
-- **Missing media is never silent:** the editor shows a relink banner and an import screen lets you re-point each asset.
-- Undo/redo with labelled, coalesced history.
-- Local autosave plus a recovery prompt on the next launch.
-
----
-
-## Offline architecture
-
-Editing, preview and export are entirely local:
-
-- Media is copied into the app's private storage on import and referenced by stable asset ids.
-- The renderer, effect chain, audio mixer and encoder are all on-device components
-  (OpenGL ES, `MediaCodec`, `MediaMuxer`, `AudioTrack`).
-- Nothing in the editing path opens a socket.
-
-The single optional network call is `UpdateRepository`, which performs one
-`GET https://api.github.com/repos/pushparaj9749/Vynox/releases/latest` from the home
-screen to show "a newer version exists". It is disabled by turning off
-**Settings → Check GitHub for updates**, and failure is silent.
-
----
-
-## The `.vnx` project format
-
-`.vnx` is a versioned, text-first container:
-
-- **Plain `.vnx`** — a JSON document (schema versioned by `VynoxSchema.CURRENT`) describing the
-  canvas, assets, layers, transforms, keyframes, effects, masks, markers and settings.
-- **Bundled `.vnx`** — the same document packaged as a zip together with the media files and a
-  preview thumbnail, so a single file can be shared and opened elsewhere.
-- Readers detect the container automatically (`VnxReader.isZip`) and older files are upgraded
-  through migration steps, with warnings surfaced to the user instead of silent data loss.
-
-Serialization lives in `core:vnx` and knows nothing about the UI: `ValueCodecs` encode
-animated values, `VnxProjectCodec` maps the document model, and `AssetResolution` handles
-missing/relinked media. The format is decoupled from any screen, so it can be tested,
-versioned and extended independently.
-
----
+Vynox-128 is a modular **128-bit integer processor RTL project** written in SystemVerilog. This is a hardware-design project—not an Android app and not a fabricated silicon chip. The repository contains the RTL and a simulation testbench; producing physical silicon requires a target process/PDK, synthesis, place-and-route, sign-off, and a foundry tape-out.
 
 ## Architecture
 
-```
-core/                      Pure Kotlin modules — no Android, fully unit tested
-  json/                    Minimal JSON parser/writer used by .vnx
-  math/                    Vec2, Rect, Matrix3, Color, easing helpers
-  animation/               Animatable values, keyframe tracks, Bezier interpolation
-  model/                   Project, Layer, Transform, Content, Effects, Masks, Canvas
-  effects/                 Extensible effect registry + built-in catalogue
-  composition/             Evaluates a project at time T into a render plan
-  timeline/                Timeline operations, snapping, undo/redo history
-  vnx/                     .vnx read/write, asset resolution, migrations
+- 128-bit integer datapath and 32 general-purpose registers (`R0` is hard-wired to zero)
+- 64-bit byte-addressed program counter and data addresses
+- Fixed 64-bit instruction words
+- Five-stage in-order pipeline (IF/ID/EX/MEM/WB) with EX/MEM and MEM/WB bypassing, one-cycle load-use interlock, branch flushing, and wait-state freezing
+- 128-bit ALU with arithmetic, logic, shifts, comparisons, and low-half multiply
+- Direct-mapped, configurable 16-line L1 instruction cache (one 64-bit instruction per line) with frontend miss stalls and refill-error propagation
+- Direct-mapped 16-line (256-byte), 128-bit L1 data cache (write-through/write-allocate); MMIO and unmapped addresses bypass it
+- Integrated `vynox128_soc` with a 2 KiB program ROM, independently wait-stated instruction refills, wait-state RAM, both L1 caches, GPIO, timer, and full-duplex UART
+- 128-bit GPIO input/output registers and 8N1 full-duplex UART
+- U/M privilege states, machine CSRs, precise traps, and a machine-only `SATP` CSR with a custom Bare/Sv48-style mode/root-PPN layout
+- Separate direct-mapped instruction/data TLBs and four-level 4 KiB page walks for U mode; M mode bypasses translation
+- Translation faults preserve original virtual addresses in `MTVAL`; translated physical addresses feed the I-cache, MPU, D-cache, and MMIO map
+- A coarse physical-region guard still confines U-mode data accesses to a configurable RAM window (default `[0x000, 0x800)`), after translation and before the bus
+- Precise synchronous traps through `MTVEC`; timer/UART share one machine-external interrupt input, with drain-before-entry and single-level (non-nested) handling
+- `MRET` restores privilege and interrupt-enable state; `IRET` remains a compatibility alias; legacy `EI`/`DI` remain supported
+- Aligned 16-byte data transfers; load/store addresses must be 16-byte aligned
+- Illegal instructions, alignment/access faults, `ECALL`, and `EBREAK` record a trap and redirect to the machine trap vector; `fault`/`fault_code` are sticky debug outputs, not a claim that the core halted
+- Two-pass Python assembler with labels, CSR names, trap instructions, and a small `LI` pseudo-instruction
 
-app/                       Android application (Kotlin + Jetpack Compose)
-  data/                    MediaProbe, AssetStore, ProjectStore, SettingsStore, UpdateRepository
-  render/
-    gl/                    EGL/GL renderer, shaders, framebuffers, effect planner
-    source/                Video decoder, text/shape rasterizers, texture caches
-    audio/                 Sequential PCM decoding, resampling, mixer, AudioTrack playback
-    export/                MediaCodec surface encoder + AAC + MediaMuxer
-  ui/
-    theme/                 Original dark palette, shapes, typography
-    navigation/            Routes + in-memory session
-    splash, home, projects, newproject, importv
-    editor/                Editor screen, preview engine, timeline, layer list, inspector, graph editor
-    export, settings, about
-```
+The data interface uses `data_valid`/`data_ready`; `data_error` reports a failed accepted access. A transfer is accepted on a rising clock edge when both are high. The instruction interface adds `instruction_ready`: the frontend advances its PC only when a valid instruction is accepted and otherwise stalls while older pipeline stages drain. Bare-core test harnesses without an instruction cache tie `instruction_ready` high. The SoC's I-cache serves a 256-word (2 KiB) read-only program ROM; out-of-range physical fetches become precise instruction access faults. The default data-RAM address ceiling is `RAM_BYTES=0x8000` (configurable from 4–64 KiB in 4 KiB steps). The fixed MMIO window overlays `0xF70`–`0xFFF`; the remainder is RAM. The page-table walker reads 64-bit PTEs directly from this RAM and rejects MMIO/out-of-range PTE addresses:
 
-The layering rule: **the engine never depends on the UI, and the UI never reimplements
-engine logic.** Screens observe project state; every edit is a pure transformation of
-`VynoxProject` pushed through `History`, which is what makes undo/redo reliable.
+| Byte address | Register | Behavior |
+|---:|---|---|
+| `0x000`–`0xF6F`, `0x1000`–`RAM_BYTES-1` | Data RAM | 128-bit words; default address ceiling `0x8000` (MMIO hole excluded) |
+| `0xF70` | UART RX data | Read the received byte; read consumes it |
+| `0xF80` | UART TX data | Store a byte to send; writes wait until TX is ready |
+| `0xF90` | UART status | bit 0 TX busy, bit 1 TX ready, bit 2 enabled, bit 3 RX valid, bit 4 RX error |
+| `0xFA0` | UART divisor | Clock cycles per serial bit; minimum 1 |
+| `0xFB0` | UART control | bit 0 enables UART, bit 1 enables RX interrupt |
+| `0xFC0` | Timer control | bit 0 enable, bit 1 IRQ enable, bit 2 periodic mode |
+| `0xFD0` | Timer count | 64-bit counter, readable/writable |
+| `0xFE0` | Timer compare | 64-bit threshold; zero disables compare |
+| `0xFF0` | Timer status | bit 0 pending; write 1 to clear |
 
----
+The SoC's static physical-region guard allows U-mode 16-byte data accesses only when the entire translated physical transfer fits in `[USER_RAM_BASE, USER_RAM_LIMIT)` (default `[0x000, 0x800)`); the upper RAM window and MMIO are machine-only. Denied loads/stores trap precisely with access-fault cause 5/7 and the original virtual address in `MTVAL`, before any bus side effect. This remains a coarse physical-region rule layered after translation, not a complete security boundary.
 
-## Development setup
+The L1 instruction cache is direct-mapped, defaults to 16 one-instruction lines, and has a configurable line count. A miss stalls only instruction fetch while older pipeline work proceeds; a redirected fetch never consumes a stale refill. `FENCE` serializes the in-order memory stream and `FENCE.I` serializes the frontend and invalidates the I-cache, including discarding an in-flight refill. The SoC makes only the ROM range instruction-cacheable and only data RAM data-cacheable. The L1 data cache is direct-mapped with 16 one-word lines, write-through/write-allocate policy, and physical-address tags. Successful stores update the cache and backing RAM; cache misses wait for the backing-memory handshake. UART/timer MMIO and unmapped addresses bypass D-cache. Executable RAM and self-modifying-code coherence are not supported yet. The UART receives and transmits 8N1 frames, least-significant bit first; TX writes wait for space, RX has a one-byte holding register, and status bit 4 is write-one-to-clear for overrun/framing errors. Its reset divisor is the SoC `UART_DIVISOR` parameter. The timer is clocked by the SoC clock. Its one-shot mode disables itself on compare; periodic mode reloads the counter. Timer and UART RX currently share one external IRQ input. The reset trap vector is direct at byte address `0x100`; machine software may configure `MTVEC` for a direct vector or an instruction-word-strided vectored interrupt table. Interrupt nesting and per-device prioritization are not supported.
 
-Requirements:
+## Virtual memory (initial integration)
 
-- JDK 17 (the CI uses Temurin 17)
-- Android SDK with build-tools and platform 35 (`minSdk 26`, `targetSdk 35`)
-- No accounts, no API keys, no local secrets required for a debug build
+U-mode instruction and data addresses are translated independently before cache/bus lookup when `SATP.MODE=9`. Each path has a configurable direct-mapped TLB (four entries by default) and a four-level, 512-entry-per-level page-table walker with 64-bit PTEs and 4 KiB leaves. Virtual addresses must be 48-bit canonical; superpages and ASIDs are not implemented. PTE permissions are U/R/W/X plus software-managed A/D; the walker never modifies page tables.
 
-```bash
-git clone https://github.com/pushparaj9749/Vynox.git
-cd Vynox
-./gradlew :core:math:test          # engine tests, no Android SDK needed
-./gradlew assembleDebug            # debug APK
-```
+This is a custom Sv48-inspired format, not RISC-V-compatible SATP semantics. CSR `SATP` (`0x180`) uses bits `[63:60]` for mode (`0` Bare, `9` translated), `[59:40]` reserved, and `[39:0]` for the root PPN. Unsupported modes are coerced to Bare. M mode always bypasses translation. `SFENCE.VMA` (opcode `0x4C`, M-mode only) globally flushes both TLBs; its optional register operands are accepted by the assembler but not used for selective invalidation. SATP writes are serialized and also request a global flush.
 
-If you do not have the Android SDK locally, `ANDROID_HOME` / `ANDROID_SDK_ROOT` must point
-at a valid SDK (or create `local.properties` with `sdk.dir=...`, which is git-ignored).
+The SoC arbitrates instruction/data page-table reads through a shared single-outstanding PTW path into physical data RAM; I-walks have priority if both request together. PTW latency follows `MEMORY_WAIT_CYCLES`. Page faults report causes 12/13/15, page-table bus failures report access-fault causes 1/5/7, and `MTVAL` carries the original VA. The I-cache remains backed by the 2 KiB ROM while the D-cache/MPU/MMIO path uses physical data addresses. The end-to-end VM program builds page tables in M mode using ordinary `STORE`s, then modifies a warmed data mapping and verifies that `SFENCE.VMA` makes the next U-mode access use the new physical page; it also exercises SATP readback, page faults, PTW bus faults, and virtual `MTVAL`.
 
----
+This is an initial experimental integration—not an OS-capable MMU or complete isolation boundary. There is no S mode, ASID, selective fence, superpage, hardware A/D update, executable RAM, or unified instruction/data physical memory. See [`VM_SPEC.md`](VM_SPEC.md) for the exact draft contract and its limits.
 
-## Building
+## Instruction encoding
 
-| Task | Command | Output |
-| --- | --- | --- |
-| Engine tests | `./gradlew test` | Unit test reports for all `core:*` modules |
-| Debug APK | `./gradlew assembleDebug` | `app/build/outputs/apk/debug/` |
-| Release APK (unsigned) | `./gradlew assembleRelease` | `app/build/outputs/apk/release/` |
-| Signed release APK | provide signing env vars, then `./gradlew assembleRelease` | signed, v1+v2+v3 |
+Each instruction is 64 bits:
 
-### Signing
-
-`app/build.gradle.kts` reads signing configuration **only from the environment** and builds
-unsigned when it is absent, so a plain checkout always builds:
-
-```
-VYNOX_KEYSTORE_FILE        path to the .jks/.keystore
-VYNOX_KEYSTORE_PASSWORD    keystore password
-VYNOX_KEY_ALIAS            key alias
-VYNOX_KEY_PASSWORD         key password
+```text
+63        56 55    51 50    46 45    41 40                         9 8       0
++-----------+--------+--------+--------+-----------------------------+---------+
+|  opcode   |   rd   |  rs1   |  rs2   | signed immediate (32 bits) | reserved|
++-----------+--------+--------+--------+-----------------------------+---------+
 ```
 
-In GitHub Actions these come from repository secrets
-(`VYNOX_KEYSTORE_BASE64`, `VYNOX_KEYSTORE_PASSWORD`, `VYNOX_KEY_ALIAS`, `VYNOX_KEY_PASSWORD`).
-The release workflow decodes the keystore to a temporary file outside the workspace and
-deletes it in an `always()` step. No keystore, password or Base64 blob is ever committed,
-printed, uploaded as an artifact or exposed on the Pages site.
+- R-type instructions use `rd`, `rs1`, and `rs2`.
+- Immediate and load instructions use `rd`, `rs1`, and the sign-extended immediate.
+- `STORE` uses `rs1` as the base, `rs2` as the 128-bit value, and the immediate as a byte offset.
+- Branch offsets are signed counts of 64-bit instructions: target = `PC + (immediate * 8)`.
+- `JAL` saves `PC + 8` in `rd` and jumps by the same relative-offset rule.
 
----
+| Opcode | Mnemonic | Behavior |
+|---:|---|---|
+| `00` | `NOP` | No operation |
+| `01` | `ADD` | `rd = rs1 + rs2` |
+| `02` | `SUB` | `rd = rs1 - rs2` |
+| `03`–`05` | `AND`, `OR`, `XOR` | Bitwise register operation |
+| `06`–`08` | `SLL`, `SRL`, `SRA` | 128-bit shifts; shift count is `rs2[6:0]` |
+| `09`–`0A` | `SLT`, `SLTU` | Signed/unsigned less-than result |
+| `0B`–`0E` | `ADDI`, `ANDI`, `ORI`, `XORI` | Register/immediate operation |
+| `0F` | `MUL` | Low 128 bits of the 128 × 128-bit product |
+| `10` | `LOAD` | Load one 128-bit word from memory |
+| `11` | `STORE` | Store one 128-bit word to memory |
+| `20`–`25` | `BEQ`, `BNE`, `BLT`, `BGE`, `BLTU`, `BGEU` | Conditional relative branch |
+| `30` | `JAL` | Relative jump and link |
+| `40` | `IN` | Read the 128-bit GPIO input |
+| `41` | `OUT` | Write a register to the 128-bit GPIO output |
+| `42` | `EI` | Enable maskable interrupts |
+| `43` | `DI` | Disable maskable interrupts |
+| `44` | `IRET` | Compatibility alias for machine trap return |
+| `45` | `CSRR` | Read a machine CSR into `rd` (CSR address is in the immediate field) |
+| `46` | `CSRW` | Write `rs1[63:0]` to a machine CSR (CSR address is in the immediate field) |
+| `47` | `MRET` | Return from a machine trap using `MEPC` and `MSTATUS` |
+| `48` | `ECALL` | Raise a privilege-specific environment-call exception |
+| `49` | `EBREAK` | Raise a breakpoint exception |
+| `4A` | `FENCE` | Serialize prior memory operations in the in-order system |
+| `4B` | `FENCE.I` | Serialize fetch and invalidate the instruction cache |
+| `4C` | `SFENCE.VMA` | Serialize and globally flush instruction/data TLBs (machine mode only) |
+| `FF` | `HALT` | Stop execution (machine mode only) |
 
-## Testing
+Fault codes are stable debug outputs: `00` none, `01` illegal instruction/privilege violation, `02` unaligned memory access, `03` data-bus or page-walk access error, `04` instruction access/fetch fault, `05` environment call, `06` breakpoint, `07` physical-region protection violation, `08` page fault, and `FF` internal controller fault. A synchronous exception updates the machine trap CSRs and redirects execution; observing `fault` does not by itself mean the core has halted.
 
-CI (`.github/workflows/ci.yml`) runs on every push and pull request:
+## Machine trap and CSR subset
 
-1. `./gradlew test` — engine unit tests (math, JSON, animation, timeline, effects, composition, `.vnx` round-trips, asset resolution)
-2. `./gradlew assembleDebug`
-3. `./gradlew assembleRelease` (unsigned; verifies the release variant and R8 config)
-4. On failure, a filtered report is posted as a comment on issue #1 so the reason is visible without reading a full Gradle log.
+This is a small custom machine/user privilege subset, not a claim of RISC-V compliance. It provides U (`00`) and M (`11`) modes, precise synchronous traps, an external machine interrupt, and serialized CSR writes. CSR instructions are privileged to M mode; unsupported or read-only writes trap as illegal instructions. U-mode requests now undergo page translation when enabled, then the physical user-RAM guard blocks accesses outside its configured window. The design still lacks a full protection/virtual-memory architecture and must not be treated as a production security boundary.
 
-What the tests cover:
+| CSR | Address | Current behavior |
+|---|---:|---|
+| `MSTATUS` | `0x300` | Implements MIE bit 3, MPIE bit 7, and MPP bits 12:11 (U/M only) |
+| `MIE` | `0x304` | Machine external interrupt enable in bit 11 |
+| `MTVEC` | `0x305` | Direct mode (`mode=0`) or vectored external-interrupt mode (`mode=1`); the instruction target must be 8-byte aligned |
+| `MSCRATCH` | `0x340` | Machine software scratch register |
+| `MEPC` | `0x341` | Trap return PC; low three bits are cleared |
+| `MCAUSE` | `0x342` | Synchronous exception code or interrupt flag plus cause |
+| `MTVAL` | `0x343` | Faulting instruction/address/PC where applicable; zero for `ECALL` |
+| `MIP` | `0x344` | Read-only external IRQ pending indication in bit 11 |
+| `SATP` | `0x180` | Custom MODE `[63:60]` (0 Bare, 9 Sv48-style), reserved `[59:40]`, root PPN `[39:0]`; unsupported modes become Bare |
+| `MCYCLE` | `0xC00` | Read-only cycle counter |
+| `MINSTRET` | `0xC02` | Read-only retired-instruction counter |
 
-- Math: transforms, rotation about an anchor, colour conversion, rectangle algebra
-- Animation: keyframe insert/move/delete, interpolation, Bezier easing, shortest-arc angles
-- Timeline: split, trim, move, snapping, undo/redo history, marker handling
-- Effects: registry behaviour, parameter defaults, resolution of animated parameters
-- Composition: evaluation at time T, layer bounds, hit testing, audio activity
-- `.vnx`: full project round-trip, bundled packages, migrations, warning handling, missing-asset resolution
+Synchronous cause values currently used are instruction access/page fault 1/12, illegal instruction 2, breakpoint 3, load alignment/access/page fault 4/5/13, store alignment/access/page fault 6/7/15, U-mode `ECALL` 8, and M-mode `ECALL` 11. The shared timer/UART input is machine external interrupt cause 11 (with the interrupt flag set in `MCAUSE`). In vectored `MTVEC` mode, an interrupt target is `base + cause * 8` because instructions are 8 bytes; synchronous traps always use the base. `MRET` restores privilege and MIE from MPP/MPIE, then clears MPP to U. Traps are single-level; `MRET`/`IRET` do not support nested contexts.
 
-Manual verification checklist before a release: build debug → install → create a project →
-import media → add text/shape → animate with keyframes and the graph editor → add effects and
-masks → preview with audio → save → reopen from Projects → export MP4 → play the exported file.
+## Assembler
 
----
+The two-pass assembler accepts `R0`–`R31` (or `X0`–`X31`), decimal/hex immediates, comments, and labels. Branch and jump labels are assembled as signed PC-relative instruction offsets. Example syntax:
 
-## Release process
+```asm
+LI    R1, 10
+loop:
+ADDI  R1, R1, -1
+BNE   R1, R0, loop
+LOAD  R2, R0, 0x100
+STORE R2, R0, 0x110
+HALT
+```
 
-Releases are deliberate: pushing a `v*.*.*` tag or running the workflow manually. Ordinary
-commits never publish a release.
+`LOAD`/`STORE` offsets must be 16-byte aligned; the processor also checks the final effective address at runtime. `LI rd, imm` is a one-instruction pseudo-op for `ADDI rd, R0, imm`. `FENCE` and `FENCE.I` take no operands. `SFENCE.VMA` accepts no operands or two registers (currently ignored; invalidation is global). `.org byte_address` inserts NOPs up to an aligned address; the vectored timer demo places its machine-external interrupt handler at `.org 0x158` (`0x100 + 11 * 8`).
 
-1. Bump `versionCode` / `versionName` in `gradle/libs.versions.toml` (or `app/build.gradle.kts`).
-2. Merge to `main` and confirm CI is green.
-3. Tag and push:
+## Assemble and simulate
 
-   ```bash
-   git tag -a v0.1.0 -m "Vynox v0.1.0"
-   git push origin v0.1.0
-   ```
+Assemble the example program to a 64-bit-word hex file:
 
-4. The **Release** workflow (`.github/workflows/release.yml`) then:
-   - checks out the tag and runs the tests
-   - restores the keystore from secrets into a temp file (never into the repo)
-   - builds the signed release APK (unsigned if the secrets are absent)
-   - verifies the APK and prints its signature summary
-   - creates the GitHub Release with generated notes (commit log since the previous tag)
-   - appends the version to `CHANGELOG.md` and writes `docs/VERSION`
-   - requests a Pages deployment
-   - removes all temporary signing files in an `always()` step
+```sh
+python3 tools/vynox128_asm.py programs/sum_1_to_10.s --pad-to 256 -o build/sum_1_to_10.hex
+```
 
-An existing tag or release is never overwritten: if the release already exists the workflow
-reports it and stops rather than clobbering published artifacts.
+The default test uses Icarus Verilog compiled to WebAssembly, so it does not need a system-wide simulator install. Install the project dependency once, then run:
 
----
+```sh
+npm install
+make test
+```
 
-## Download page (GitHub Pages)
+`make test` runs assembler unit tests plus seventeen RTL simulations: ALU edge cases, the five-stage core/ISA, fault handling, machine/user privilege and CSR traps, pipeline bypass/interlock/flush behavior, I-cache miss/hit/conflict/invalidation/redirect/refill-error behavior, D-cache miss/hit/write-through/MMIO behavior, standalone four-level MMU tests, the SoC demo, an integrated virtual-memory SoC test, U-mode physical-region protection, vectored timer interrupts, UART TX serialization, UART RX polling/decoding, UART RX interrupt handling, and UART receive-error cases. The trap program checks CSR read-after-write, cycle/retirement counters, user-mode CSR read/write rejection, `ECALL`, trap-state CSRs, and `MRET`; the SoC demo executes `FENCE` and `FENCE.I`, while the protection test checks allowed user RAM and denied kernel-RAM loads/stores with no bus side effect. The UART suite checks overrun retention, framing-error detection/clear, RX IRQs, and read-to-clear; other tests exercise memory wait states and a load-use bubble. On a machine with native Icarus Verilog and VVP installed, use `make test-native` instead.
 
-The site lives in `docs/` and is published by `.github/workflows/pages.yml` to
-<https://pushparaj9749.github.io/Vynox/>.
+## Scope status
 
-It shows the name, description, features, install steps, repository link, current version and
-a **Download APK** button. The button is resolved at page load: `docs/assets/script.js` calls
-the GitHub API for the latest release and points the button at that release's APK asset. No
-version-specific URL is hard-coded, so the page keeps working for every future release. If the
-API is unreachable the button falls back to the releases page.
-
----
-
-## Limitations
-
-Honest notes about the current implementation:
-
-- **Path masks** are supported in the data model and renderer, but the on-screen editor
-  exposes them as positional/resizable rectangle and ellipse masks; free-hand vertex editing
-  is not in the UI yet.
-- **Waveform display** is not drawn; audio is edited by trim, level and mute.
-- Video decode for preview is sequential with seek-to-previous-sync, which is accurate enough
-  for editing but can show a short settle on some codecs.
-- Export resolution is limited by the device encoder (typically 4K maximum) and encodes in
-  real time or slower depending on effect complexity.
-- Projects are stored on the device; there is no cloud sync (by design — Vynox is offline-first).
-
----
-
-## Roadmap
-
-- Vertex editing for path masks
-- Waveform display and audio keyframe envelopes in the timeline
-- Adjustment layers and per-group effects
-- Motion blur and more effect modules (registered through the same extensible registry)
-- Expression/property links between layers
-- Optional project templates and asset packs
-
----
-
-## Security
-
-- Signing secrets exist only as GitHub Actions secrets. They are never printed, echoed,
-  committed, uploaded as artifacts or rendered onto the Pages site.
-- No keystore, `.jks`, Base64 key material, password or private key is present in the
-  repository; `.gitignore` excludes keystores, keys and `local.properties` as defence in depth.
-- The release workflow decodes the keystore to a temporary directory outside the workspace and
-  deletes it in an `always()` cleanup step.
-- CI failure reports are filtered (`grep`/`awk`) so logs posted to issues cannot leak secrets.
-
----
-
-## Licence
-
-Source is published in this repository; see the repository settings for licence details.
+The five-stage pipeline, split L1 caches, initial machine/user traps, coarse physical data guard, and an experimental four-level virtual-memory path are integrated and directed-simulation tested. The VM slice includes SATP/SFENCE.VMA control, separate I/D TLBs, shared PTW arbitration, canonical-address and permission checks, page/access-fault routing, and original-VA MTVAL reporting. The implementation remains deliberately limited: 4 KiB leaves only, no ASID or S mode, M-mode bypass, 2 KiB read-only instruction ROM, no executable RAM, and a coarse physical user window after translation. The trap architecture still has one external interrupt input and no nesting or device priority. This is **not yet an OS-capable or silicon-ready CPU** and needs broader formal/randomized verification, synthesis, and implementation work. Passing RTL simulations are not synthesis, timing-closure, FPGA, or silicon evidence. See [`VM_SPEC.md`](VM_SPEC.md) and [`ROADMAP.md`](ROADMAP.md) for the exact current contract and boundaries.
